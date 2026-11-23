@@ -1,0 +1,20 @@
+# Local credentials
+/.env
+/.env.*
+!/.env.example
+
+# Dependencies
+/node_modules/
+
+# Playwright reports, artifacts, and local browser state
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+/.playwright-cli/
+/playwright/.cache/
+/playwright/.auth/
+
+# Allure reports and results
+/allure-results/
+/allure-report/
