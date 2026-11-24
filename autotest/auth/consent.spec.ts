@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { getPrivacyConsentCheckbox, openAuthForm } from "./auth-helpers";
+import { expect, test } from "../../core/test";
+import { AuthDialog } from "../../ui/auth-dialog";
 
 const consentText =
   "Я подтверждаю ознакомление с политикой конфиденциальности и даю согласие на обработку персональных данных";
@@ -7,10 +7,9 @@ const consentText =
 test("ТК-ВХ-13. Отображение и переключение флажка согласия", async ({
   page,
 }) => {
-  const login = await openAuthForm(page);
-  const { checkbox, checkmark, label } = getPrivacyConsentCheckbox(
-    login.locator(".window__form.login-options"),
-  );
+  const auth = new AuthDialog(page);
+  await test.step("Открыть форму входа из каталога", () => auth.openFromCatalog());
+  const { checkbox, checkmark, label } = auth.consent;
 
   await test.step("Проверить отображение флажка и текст согласия", async () => {
     await expect(checkbox).toBeVisible();
