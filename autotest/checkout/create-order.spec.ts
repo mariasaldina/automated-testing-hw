@@ -86,14 +86,16 @@ test("ТК-КП-21. Оформление заказа от каталога до
     expect(price).toBeGreaterThan(0);
     cleanup.cart = async () => {
       await cart.open();
-      await expect(selected.row.or(cart.emptyMessage)).toBeVisible();
-      if (await selected.row.isVisible()) {
-        await expect(cart.rows).toHaveCount(1);
-        await selected.select();
-        await expect(selected.checkmark).toBeVisible();
-        await cart.removeSelected();
-        await expect(cart.emptyMessage).toBeVisible();
-      }
+      await expect(cart.rows.first().or(cart.emptyMessage), "Корзина должна загрузиться перед очисткой")
+        .toBeVisible({ timeout: timeouts.orderSync });
+      if (await cart.emptyMessage.isVisible()) return;
+
+      await expect(cart.rows, "Перед очисткой в корзине должен быть ровно один товар").toHaveCount(1);
+      await expect(selected.row, "Удалять можно только товар, выбранный этим тестом").toBeVisible();
+      await selected.select();
+      await expect(selected.checkmark).toBeVisible();
+      await cart.removeSelected();
+      await expect(cart.emptyMessage).toBeVisible();
     };
     await product.addToCart();
     return price;
@@ -101,7 +103,9 @@ test("ТК-КП-21. Оформление заказа от каталога до
 
   await test.step("Сверить выбранный диван, количество, цену и итог в корзине", async () => {
     await cart.open();
-    await expect(selected.name).toHaveText(offer.name);
+    await expect(selected.row, `В корзине должно появиться предложение ${offer.offerId}`)
+      .toBeVisible({ timeout: timeouts.orderSync });
+    await expect(selected.name, `В строке корзины должно быть название «${offer.name}»`).toBeVisible();
     await expect(cart.rows).toHaveCount(1);
     await expect(selected.quantity).toHaveValue("1");
     await expect(selected.price).toBeVisible();
@@ -120,8 +124,9 @@ test("ТК-КП-21. Оформление заказа от каталога до
     await expect(checkout.paymentStep).toBeVisible();
   });
 
-  const { address, total } = await test.step("Подтвердить получателя, выбрать ПВЗ и проверить итоговую сумму", async () => {
-    await checkout.continueWithSavedRecipient();
+  await test.step("Подтвердить контактные данные получателя", () => checkout.continueWithSavedRecipient());
+
+  const { address, total } = await test.step("Выбрать ПВЗ и проверить итоговую сумму", async () => {
     const address = await checkout.choosePickupPoint();
     await checkout.acceptOrderPolicy();
     await expect(checkout.total).toBeVisible();
@@ -139,11 +144,12 @@ test("ТК-КП-21. Оформление заказа от каталога до
     return new Set((await history.activeOrders()).map(({ number }) => number));
   });
   let number: string | undefined;
+  let inspectedOrder: Awaited<ReturnType<typeof findNewOrder>> | undefined;
 
   cleanup.order = async () => {
     try {
-      const created = await findNewOrder(history, existing, number);
-      await history.openDetails(created.href);
+      const created = inspectedOrder ?? await findNewOrder(history, existing, number);
+      if (!inspectedOrder) await history.openDetails(created.href);
       if (!number) {
         await expect(history.product(offer.name), "Новый заказ должен содержать тестовый диван").toBeVisible();
         expect(priceInKopecks(await history.total.innerText())).toBe(total);
@@ -172,10 +178,12 @@ test("ТК-КП-21. Оформление заказа от каталога до
   await test.step("Найти новый заказ и сверить состав, сумму и получение", async () => {
     const created = await findNewOrder(history, existing, number);
     await history.openDetails(created.href);
+    inspectedOrder = created;
     await expect(history.product(offer.name)).toBeVisible();
     await expect(history.quantity).toHaveText(/^1\s+товар$/u);
     expect(priceInKopecks(await history.total.innerText())).toBe(total);
-    await expect(history.pickup).toContainText(/самовывоз|пункт[а-я]* выдачи/iu);
+    await expect(history.pickup, "В деталях заказа должен отображаться способ получения")
+      .toContainText(/самовывоз|пункт[а-яё]*\s+выдачи|^Доставка заказа$/iu);
     await expect(history.deliveryAddress).toContainText(address);
   });
 });

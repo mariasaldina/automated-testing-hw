@@ -22,10 +22,15 @@ export class CartPage {
     return this.page.locator(".basket-card:visible");
   }
 
-  rowFor(offer: { pathname: string; offerId: string }) {
-    const href = `${offer.pathname}?offer_id=${encodeURIComponent(offer.offerId)}`;
-    const link = this.page.locator(`a[href=${JSON.stringify(href)}]`);
-    return new CartItem(this.rows.filter({ has: link }), link);
+  rowFor(offer: { name: string; offerId: string }) {
+    const parameter = `offer_id=${encodeURIComponent(offer.offerId)}`;
+    const selectors = ["?", "&"].flatMap((prefix) => [
+      `a[href$="${prefix}${parameter}"]`,
+      `a[href*="${prefix}${parameter}&"]`,
+      `a[href*="${prefix}${parameter}#"]`,
+    ]);
+    const link = this.page.locator(selectors.join(", "));
+    return new CartItem(this.rows.filter({ has: link }), offer.name);
   }
 
   get checkoutButton() {
@@ -50,10 +55,10 @@ export class CartPage {
 }
 
 class CartItem {
-  constructor(readonly row: Locator, private readonly link: Locator) {}
+  constructor(readonly row: Locator, private readonly productName: string) {}
 
   get name() {
-    return this.row.locator(".basket-card__right__features").locator(this.link);
+    return this.row.getByText(this.productName, { exact: true }).filter({ visible: true });
   }
 
   get price() {
