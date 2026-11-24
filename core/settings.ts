@@ -6,6 +6,8 @@ export const settings = {
   baseURL: process.env.BASE_URL ?? "https://hypermarketmebel.ru/",
   browserChannel: process.env.BROWSER_CHANNEL ?? "chrome",
   liveSms: process.env.RUN_LIVE_SMS === "1",
+  orderPreview: process.env.RUN_ORDER_PREVIEW === "1",
+  liveOrder: process.env.RUN_LIVE_ORDER === "1",
 };
 
 function milliseconds(name: string, fallback: number): number {
@@ -26,6 +28,9 @@ export const timeouts = {
   authResponse: milliseconds("AUTH_RESPONSE_TIMEOUT_MS", 10_000),
   smsRequest: milliseconds("SMS_REQUEST_TIMEOUT_MS", 15_000),
   smsTest: milliseconds("SMS_TEST_TIMEOUT_MS", 60_000),
+  orderTest: milliseconds("ORDER_TEST_TIMEOUT_MS", 120_000),
+  orderSync: milliseconds("ORDER_SYNC_TIMEOUT_MS", 20_000),
+  orderCleanup: milliseconds("ORDER_CLEANUP_TIMEOUT_MS", 60_000),
   screenshot: milliseconds("SCREENSHOT_TIMEOUT_MS", 5_000),
 };
 

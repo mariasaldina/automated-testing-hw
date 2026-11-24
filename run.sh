@@ -8,6 +8,9 @@ playwright_args=()
 
 for arg in "$@"; do
   case "$arg" in
+    --include-live)
+      export RUN_LIVE_SMS=1 RUN_LIVE_ORDER=1
+      ;;
     --no-prompt)
       prompt_for_credentials=false
       ;;
@@ -17,9 +20,10 @@ for arg in "$@"; do
       ;;
     -h|--help)
       cat <<'HELP'
-Использование: bash run.sh [--no-prompt] [аргументы playwright test]
+Использование: bash run.sh [--include-live] [--no-prompt] [аргументы playwright test]
 
-  bash run.sh                                           Все тесты
+  bash run.sh                                           Прогон по умолчанию
+  bash run.sh --include-live                            Включить отправку SMS и оформление заказа
   bash run.sh -g 'Вход по e-mail'                        Один тест по названию
   bash run.sh autotest/auth/password-signin.spec.ts --debug  Тесты файла в Inspector
   bash run.sh --no-prompt -g 'ТК-ВХ-13'                   Тест без запроса данных

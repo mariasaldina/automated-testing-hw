@@ -1,11 +1,11 @@
 import { performance } from "node:perf_hooks";
 import { errors, type Locator, type Page } from "@playwright/test";
 import { timeouts } from "../core/settings";
+import { straightSofasPath } from "./catalog-page";
 import { Header } from "./header";
 import { privacyConsent } from "./privacy-consent";
 import { SmsLoginForm } from "./sms-login-form";
 
-const catalogPath = "/catalog/pryamye_divany";
 const loginApiPath = "/api_vue/authentication/authByLogin/";
 
 export class AuthDialog {
@@ -22,7 +22,7 @@ export class AuthDialog {
   }
 
   async openFromCatalog() {
-    await this.page.goto(catalogPath, { waitUntil: "domcontentloaded" });
+    await this.page.goto(straightSofasPath, { waitUntil: "domcontentloaded" });
     const profile = this.header.profileButton("guest");
     const deadline = performance.now() + timeouts.authForm;
     const remaining = () => Math.ceil(deadline - performance.now());
