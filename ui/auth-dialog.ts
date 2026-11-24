@@ -22,7 +22,7 @@ export class AuthDialog {
   }
 
   async openFromCatalog() {
-    await this.page.goto(straightSofasPath, { waitUntil: "domcontentloaded" });
+    await this.page.goto(straightSofasPath, { waitUntil: "commit" });
     const profile = this.header.profileButton("guest");
     const deadline = performance.now() + timeouts.authForm;
     const remaining = () => Math.ceil(deadline - performance.now());

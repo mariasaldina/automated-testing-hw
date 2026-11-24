@@ -27,7 +27,7 @@ export class OrderHistory {
   }
 
   async openDetails(href: string) {
-    await this.page.goto(href, { waitUntil: "domcontentloaded" });
+    await this.page.goto(href, { waitUntil: "commit" });
     await this.page.getByText("Состав заказа", { exact: true }).waitFor({ state: "visible" });
   }
 
