@@ -8,7 +8,9 @@ test("ТК-ВХ-13. Отображение и переключение флаж�
   page,
 }) => {
   const login = await openAuthForm(page);
-  const { checkbox, checkmark, label } = getPrivacyConsentCheckbox(login);
+  const { checkbox, checkmark, label } = getPrivacyConsentCheckbox(
+    login.locator(".window__form.login-options"),
+  );
 
   await test.step("Проверить отображение флажка и текст согласия", async () => {
     await expect(checkbox).toBeVisible();
