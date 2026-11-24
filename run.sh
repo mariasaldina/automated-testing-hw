@@ -21,7 +21,7 @@ for arg in "$@"; do
 
   bash run.sh                                           Все тесты
   bash run.sh -g 'Вход по e-mail'                        Один тест по названию
-  bash run.sh tests/auth/password-signin.spec.ts --debug  Тесты файла в Inspector
+  bash run.sh autotest/auth/password-signin.spec.ts --debug  Тесты файла в Inspector
   bash run.sh --no-prompt -g 'ТК-ВХ-13'                   Тест без запроса данных
   bash run.sh --list                                    Список тестов
 HELP
@@ -45,6 +45,7 @@ if "$prompt_for_credentials"; then
   read_credential PHONE 'Телефон (Enter, если не нужен): '
   read_credential EMAIL 'E-mail (Enter, если не нужен): '
   read_credential PASSWORD 'Пароль (Enter, если не нужен): '
+  read_credential CUSTOMER_NAME 'Имя и фамилия как в профиле (Enter, если не нужны): '
 fi
 
 exec node ./node_modules/playwright/cli.js test "${playwright_args[@]}"
