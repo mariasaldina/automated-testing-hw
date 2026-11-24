@@ -47,6 +47,6 @@ export class CatalogPage {
     await this.page.waitForURL((url) =>
       url.pathname === selected.pathname && url.searchParams.get("offer_id") === offerId,
     { waitUntil: "domcontentloaded" });
-    return { name, offerId, pathname: selected.pathname };
+    return { name, offerId };
   }
 }
