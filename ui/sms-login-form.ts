@@ -38,6 +38,10 @@ export class SmsLoginForm {
     return this.phoneForm.locator(".window__error").filter({ hasText: /\S/, visible: true });
   }
 
+  get captchaChallenge() {
+    return this.phoneForm.page().locator(".SmartCaptcha-Overlay_visible:visible");
+  }
+
   get firstCodeField() {
     return this.codeForm.locator("input#input0");
   }
@@ -51,7 +55,8 @@ export class SmsLoginForm {
   }
 
   async fillPhone(nationalNumber: string) {
-    await this.phoneInput.pressSequentially(nationalNumber);
+    const formatted = nationalNumber.replace(/^(\d{3})(\d{3})(\d{2})(\d{2})$/, "+7 ($1) $2-$3-$4");
+    await this.phoneInput.fill(formatted);
   }
 
   async hasPhone(nationalNumber: string) {

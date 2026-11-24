@@ -91,7 +91,7 @@ for (const { id, title, envKey, method } of loginVariants) {
       await expect.poll(async () => {
         const actualName = await auth.header.profileName.innerText({ timeout: timeouts.expect });
         return normalizeName(actualName) === expectedName;
-      }, { message: "Имя в меню профиля должно совпасть с именем тестового пользователя" }).toBe(true);
+      }, { message: "Имя в меню профиля должно совпасть с CUSTOMER_NAME, включая порядок слов" }).toBe(true);
     });
   });
 }

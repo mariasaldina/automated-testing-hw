@@ -6,6 +6,7 @@ process.env.PLAYWRIGHT_NO_COPY_PROMPT = "1";
 export default defineConfig({
   testDir: "./autotest",
   timeout: timeouts.test,
+  workers: settings.liveSms || settings.liveOrder ? 1 : undefined,
   expect: { timeout: timeouts.expect },
   reporter: process.argv.includes("--list") ? [["list"]] : [["./core/reporting.ts"]],
   use: {

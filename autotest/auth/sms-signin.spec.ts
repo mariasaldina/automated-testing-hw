@@ -27,7 +27,7 @@ async function prepareSmsLogin(auth: AuthDialog) {
 }
 
 async function requestSmsCode(page: Page, form: SmsLoginForm) {
-  await test.step("Запросить SMS-код", async () => {
+  return test.step("Запросить SMS-код", async () => {
     const { checkbox, checkmark } = form.consent;
     await expect(checkbox).toBeVisible();
     if (!(await checkmark.isVisible())) await checkbox.click();
@@ -36,28 +36,30 @@ async function requestSmsCode(page: Page, form: SmsLoginForm) {
 
     const origin = new URL(page.url()).origin;
     const posts: Request[] = [];
-    const recordPost = (request: Request) => {
-      const type = request.resourceType();
+    const recordSmsRequest = (request: Request) => {
+      const url = new URL(request.url());
       if (
         request.method() === "POST" &&
-        (type === "xhr" || type === "fetch") &&
-        new URL(request.url()).origin === origin
+        url.origin === origin &&
+        url.pathname === "/api_vue/authentication/authByPhone/"
       ) {
         posts.push(request);
       }
     };
 
-    page.on("request", recordPost);
+    page.on("request", recordSmsRequest);
     try {
       await form.requestCodeButton.click();
       await expect(
-        form.firstCodeField.or(form.requestError).filter({ visible: true }).first(),
-        "После «Получить код» ожидается поле ввода кода или ошибка отправки",
+        form.firstCodeField.or(form.requestError).or(form.captchaChallenge).filter({ visible: true }).first(),
+        "После «Получить код» ожидается поле ввода кода, ошибка отправки или окно CAPTCHA",
       ).toBeVisible({ timeout: timeouts.smsRequest });
 
+      if (await form.captchaChallenge.first().isVisible()) return "captcha";
       if (!(await form.firstCodeField.isVisible())) {
         throw new Error("Сайт показал ошибку на форме запроса SMS-кода");
       }
+      return "code";
     } catch (error) {
       await test.info().attach(smsHttpSummary, {
         contentType: "application/json",
@@ -69,9 +71,12 @@ async function requestSmsCode(page: Page, form: SmsLoginForm) {
           ),
         }),
       });
+      if (posts.length === 0) {
+        throw new Error("Сайт не отправил запрос SMS после «Получить код». Перед отправкой сайт запускает SmartCaptcha.", { cause: error });
+      }
       throw error;
     } finally {
-      page.off("request", recordPost);
+      page.off("request", recordSmsRequest);
     }
   });
 }
@@ -84,7 +89,8 @@ test.describe("Вход с отправкой SMS", () => {
     await parameter("Способ входа", "SMS");
     const auth = new AuthDialog(page);
     const form = await prepareSmsLogin(auth);
-    await requestSmsCode(page, form);
+    const result = await requestSmsCode(page, form);
+    test.skip(result === "captcha", "Сайт показал окно SmartCaptcha при запросе SMS-кода");
     const code = String(randomInt(10_000)).padStart(4, "0");
 
     await test.step("Ввести один случайный четырёхзначный код", async () => {
