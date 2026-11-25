@@ -5,7 +5,7 @@ import type {
 } from "@playwright/test/reporter";
 import AllureReporter from "allure-playwright";
 import { ALLURE_RUNTIME_MESSAGE_CONTENT_TYPE } from "allure-js-commons/sdk/reporter";
-import { log, redactText } from "./logging";
+import { forwardWorkerLog, log, redactText } from "./logging";
 import {
   failureScreenshot,
   smsHttpSummary,
@@ -106,6 +106,10 @@ export default class Reporting extends AllureReporter {
 
   override printsToStdio() {
     return true;
+  }
+
+  override onStdOut(chunk?: string | Buffer) {
+    if (chunk !== undefined) forwardWorkerLog(chunk);
   }
 
   override onBegin(suite: Suite) {
