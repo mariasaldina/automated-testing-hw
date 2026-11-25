@@ -21,14 +21,32 @@ const pretty = prettyFactory({
   colorizeObjects: false,
 });
 
-const destination = format === "json" ? process.stdout : {
-  write(line: string) {
-    const formatted = format === "pretty"
+const workerLogPrefix = "[pino-worker] ";
+
+function writeLog(line: string) {
+  const formatted = format === "json"
+    ? line
+    : format === "pretty"
       ? pretty(line)
       : JSON.stringify(JSON.parse(line), null, 2) + "\n";
-    process.stdout.write(formatted);
+  process.stdout.write(formatted);
+}
+
+const destination = {
+  write(line: string) {
+    if (process.env.TEST_WORKER_INDEX !== undefined) {
+      process.stdout.write(workerLogPrefix + line);
+    } else {
+      writeLog(line);
+    }
   },
 };
+
+export function forwardWorkerLog(chunk: string | Buffer) {
+  const line = chunk.toString();
+  // Playwright captures worker stdout. Only forward records emitted by Pino.
+  if (line.startsWith(workerLogPrefix)) writeLog(line.slice(workerLogPrefix.length));
+}
 
 const sensitiveKeys = [
   "password", "phone", "email", "otp", "smsCode", "token", "accessToken",

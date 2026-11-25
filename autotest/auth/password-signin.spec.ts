@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { parameter } from "allure-js-commons";
 import { requireCredential, timeouts } from "../../core/settings";
+import { log } from "../../core/logging";
 import { expect, test } from "../../core/test";
 import { AuthDialog } from "../../ui/auth-dialog";
 
@@ -61,11 +62,21 @@ const rejectedLoginVariants: readonly RejectedLoginVariant[] = [
   },
 ];
 
-async function preparePasswordLogin(auth: AuthDialog, login: string, password: string) {
+async function preparePasswordLogin(
+  auth: AuthDialog,
+  { caseId, method, login, password }: {
+    caseId: string;
+    method: RejectedLoginVariant["method"];
+    login: string;
+    password: string;
+  },
+) {
   await test.step("Открыть форму входа из каталога", () => auth.openFromCatalog());
   return test.step("Открыть и заполнить форму входа по паролю", async () => {
     const form = await auth.openPasswordForm();
     await form.fill(login, password);
+    const loginField = method === "E-mail" ? "email" : "phone";
+    log.info({ caseId, method, [loginField]: login, password }, "Заполнена форма входа по паролю");
     return form;
   });
 }
@@ -79,7 +90,9 @@ for (const { id, title, envKey, method } of loginVariants) {
     const expectedName = normalizeName(requireCredential("CUSTOMER_NAME"));
     await parameter("Способ входа", method);
     const auth = new AuthDialog(page);
-    const form = await preparePasswordLogin(auth, requireCredential(envKey), requireCredential("PASSWORD"));
+    const form = await preparePasswordLogin(auth, {
+      caseId: id, method, login: requireCredential(envKey), password: requireCredential("PASSWORD"),
+    });
 
     await test.step("Отправить форму и подтвердить вход нужного пользователя", async () => {
       await form.submitAndWaitForResponse();
@@ -102,7 +115,7 @@ for (const { id, title, method, data, expectedError, emptyField } of rejectedLog
     await parameter("Способ входа", method);
     if (emptyField) await parameter("Пустое поле", emptyField === "login" ? "Логин" : "Пароль");
     const auth = new AuthDialog(page);
-    const form = await preparePasswordLogin(auth, credentials.login, credentials.password);
+    const form = await preparePasswordLogin(auth, { caseId: id, method, ...credentials });
 
     await test.step("Отправить форму и проверить отказ во входе", async () => {
       await form.submit();
